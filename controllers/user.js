@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const jwt = require("jsonwebtoken");
 const redis_client = require("../redis");
 
 async function Register(req, res) {
@@ -43,12 +44,15 @@ async function Login(req, res) {
       message: "login success",
       data: { access_token, refresh_token },
     });
-  } catch (error) {}
-
-  return res.status(401).json({ status: true, message: "login failed" });
+  } catch (error) {
+    return res
+      .status(401)
+      .json({ status: true, message: "login failed", error: error });
+  }
 }
 
-function Logout(req, res) {
+async function Logout(req, res) {
+  const token = req.token;
   const userId = req.userData.sub;
   // remove the refreshtoken
   await redis_client.del(userId.toString());
@@ -94,5 +98,5 @@ module.exports = {
   Register,
   Login,
   Logout,
-  GetAccessToken
+  GetAccessToken,
 };

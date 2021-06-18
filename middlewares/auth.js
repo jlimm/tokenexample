@@ -5,8 +5,23 @@ function verifyToken(req, res, next) {
   try {
     // bearer token
     const token = req.headers.authorization.split(" ")[1];
+
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
     req.userData = decoded;
+
+    req.token = token;
+
+    //verify blacklisted access token
+    redis_client.get("_BL" + decoded.sub.toString(),(err,data)=>{
+      if(err) throw err;
+      if(data === token){
+        return res.status(401).json({
+          status: false,
+          message: "blacklisted token.",
+          data: error,
+        });
+      }
+    })
     next();
   } catch (error) {
     return res.status(401).json({
@@ -55,6 +70,6 @@ function verifyRefreshToken(req, res, next) {
 }
 
 module.exports = {
-    verifyToken,
-    verifyRefreshToken
-}
+  verifyToken,
+  verifyRefreshToken,
+};
